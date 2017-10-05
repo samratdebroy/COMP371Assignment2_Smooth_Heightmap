@@ -22,11 +22,12 @@ Terrain::~Terrain()
 	stbi_image_free(heightMapData);
 }
 
-float* Terrain::getVertices(int width, int height)
+vector<float> Terrain::getVertices(int width, int height)
 {
-	if (vertices) return vertices;
+	if (!vertices.empty()) return vertices;
 
-	vertices = new float[getVerticesCount(width, height)];
+	vertices.resize(getVerticesCount(width,height)) ;
+
 	int i = 0;
 
 	// Populate Vertex positions
@@ -43,11 +44,12 @@ float* Terrain::getVertices(int width, int height)
 	return vertices;
 }
 
-int* Terrain::getIndices(int width, int height)
+vector<int> Terrain::getIndices(int width, int height)
 {
-	if (indices) return indices;
+	if (!indices.empty()) return indices;
 
-	indices = new int[getIndicesCount(width, height)];
+	indices.resize(getIndicesCount(width, height));
+
 	int numTriStrips = height - 1; // number of triangle strips required
 	int offset = 0;
 
@@ -110,10 +112,10 @@ void Terrain::setupMesh()
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, getVerticesCount(width, height) * sizeof(float), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, getVerticesCount(width, height) * sizeof(float), &vertices[0], GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, getIndicesCount(width, height) * sizeof(int), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, getIndicesCount(width, height) * sizeof(int), &indices[0], GL_STATIC_DRAW);
 
 	// vertex positions
 	glEnableVertexAttribArray(0);

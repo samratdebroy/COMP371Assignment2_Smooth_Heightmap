@@ -5,14 +5,17 @@
 #include <string>
 #include <glew.h>
 #include <iostream>
+#include  <vector>
+
+using namespace std;
 
 class Terrain
 {
 public:
 	Terrain(std::string heightmapPath);
 	~Terrain();
-	float* getVertices(int width, int height);
-	int* getIndices(int width, int height);
+	vector<float> getVertices(int width, int height);
+	vector<int> getIndices(int width, int height);
 	void Draw(GLenum renderMode);
 	int getWidth() const;
 	int getHeight() const;
@@ -20,8 +23,8 @@ public:
 private:
 	int width;
 	int height;
-	float* vertices = nullptr;
-	int* indices = nullptr;
+	vector<float> vertices ;
+	vector<int> indices;
 	int getVerticesCount(int width, int height);
 	int getIndicesCount(int width, int height);
 	int nrComponents;
