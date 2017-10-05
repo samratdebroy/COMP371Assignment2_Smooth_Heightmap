@@ -34,7 +34,7 @@ bool leftButtonClicked = false;
 // Timing Variables
 float deltaTime = 0.0f; // Time b/w last frame and current frame
 float lastFrame = 0.0f;
-float lastEnemyMovement = 0.0f;
+float lastSkipSizeUpdate = 0.0f;
 
 // Player controlled variables
 GLenum drawMode = GL_TRIANGLE_STRIP;
@@ -45,7 +45,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow *window);
 void setDrawMode(GLenum newDrawMode);
+void setSkipSize();
 
+// Terrain with HeightMap
+Terrain terrain;
+int skipSize = 1;
 
 // The MAIN function, from here we start the application and run the game loop
 int main()
@@ -97,7 +101,7 @@ int main()
 	triangle_scale = glm::vec3(0.01f);
 
 	// Terrain Plain
-	Terrain terrain("heightmaps/Heightmap.png");
+	terrain.init("heightmaps/Heightmap.png");
 	Shader terrainShader("shaders/terrain.vert", "shaders/terrain.frag");
 
 		// Game loop
@@ -124,7 +128,7 @@ int main()
 			terrainShader.UseProgram();
 			glm::mat4 model(1.0f);
 			model = glm::scale(model, triangle_scale);
-			model = glm::translate(model, glm::vec3(-terrain.getWidth() / 2.0f, -0.75f, -terrain.getHeight() / 2.0f));
+			model = glm::translate(model, glm::vec3(-terrain.getOriginalWidth() / 2.0f, -0.75f, -terrain.getOriginalHeight() / 2.0f));
 			terrainShader.setMat4("projection", projection);
 			terrainShader.setMat4("view", view);
 			terrainShader.setMat4("model", model);
@@ -168,6 +172,27 @@ void processInput(GLFWwindow *window)
 		triangle_scale += 0.1 * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
 		triangle_scale -= 0.1 * deltaTime;
+
+	// SkipSize Change
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && glfwGetTime() - lastSkipSizeUpdate > 1)
+	{
+		if (skipSize + 5 < terrain.getOriginalWidth()/2 && skipSize + 5 < terrain.getOriginalHeight()/2)
+		{
+			skipSize += 5;
+			setSkipSize();
+			lastSkipSizeUpdate = glfwGetTime();
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && glfwGetTime() - lastSkipSizeUpdate > 1)
+	{
+		if (skipSize - 5 >= 1 && skipSize - 5 >= 1)
+		{
+			skipSize -= 5;
+			setSkipSize();
+			lastSkipSizeUpdate = glfwGetTime();
+		}
+
+	}
 
 	// Change Render Mode
 	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
@@ -223,4 +248,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void setDrawMode(GLenum newDrawMode)
 {
 	drawMode = newDrawMode;
+}
+
+void setSkipSize()
+{
+	terrain.setSkipSize(skipSize);
 }

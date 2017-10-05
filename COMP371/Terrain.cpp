@@ -1,6 +1,6 @@
 #include "Terrain.h"
 
-Terrain::Terrain(std::string heightmapPath)
+void Terrain::init(std::string heightmapPath)
 {
 
 	heightMapData = stbi_load(heightmapPath.c_str(), &width, &height, &nrComponents, 0);
@@ -13,9 +13,13 @@ Terrain::Terrain(std::string heightmapPath)
 
 	getVertices(width, height);
 	getIndices(width, height);
-	setupMesh();
+	setupMesh(true);
 }
 
+
+Terrain::Terrain()
+{
+}
 
 Terrain::~Terrain()
 {
@@ -40,6 +44,10 @@ vector<float> Terrain::getVertices(int width, int height)
 			vertices[i++] = (float)row;	// z pos
 		}
 	}
+
+	originalVertices = vertices;
+	originalWidth = width;
+	originalHeight = height;
 
 	return vertices;
 }
@@ -81,14 +89,59 @@ void Terrain::Draw(GLenum renderMode)
 	glBindVertexArray(0);
 }
 
-int Terrain::getWidth() const
+int Terrain::getOriginalWidth() const
 {
-	return width;
+	return originalWidth;
 }
 
-int Terrain::getHeight() const
+int Terrain::getOriginalHeight() const
 {
-	return height;
+	return originalHeight;
+}
+
+void Terrain::setSkipSize(int skipSize)
+{
+	if(skipSize == 1)
+	{
+		// Overwrite the global values of the Terrain
+		width = originalWidth;
+		height = originalHeight;
+		vertices = originalVertices;
+	}else
+	{
+		// Resize the width and height to adjust for the skip size
+		int newWidth = originalWidth / skipSize;
+		int newHeight = originalHeight / skipSize;
+
+		vector<float> tempVertices;
+		tempVertices.resize(getVerticesCount(newWidth, newHeight));
+
+		int i = 0;
+
+		// Populate Vertex positions
+		for (int row = 0; row < newHeight; row++)
+		{
+			for (int col = 0; col <newWidth; col++)
+			{
+				int index = (row*skipSize*originalWidth + col*skipSize) * 3;
+				tempVertices[i++] = originalVertices[index + 0];	// x pos
+				tempVertices[i++] = originalVertices[index + 1];	// y pos
+				tempVertices[i++] = originalVertices[index + 2];	// z pos
+			}
+		}
+
+		// Overwrite the global values of the Terrain
+		width = newWidth;
+		height = newHeight;
+		vertices = tempVertices;
+	}
+
+
+	// Reset the Mesh
+	indices.clear();
+	getIndices(width, height);
+	setupMesh(false);
+
 }
 
 int Terrain::getVerticesCount(int width, int height)
@@ -104,11 +157,14 @@ int Terrain::getIndicesCount(int width, int height)
 	return (verticesPerStrip * numTriStrips + numDegenIndices);
 }
 
-void Terrain::setupMesh()
+void Terrain::setupMesh(bool init = true)
 {
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	if(init)
+	{
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+		glGenBuffers(1, &EBO);
+	}
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);

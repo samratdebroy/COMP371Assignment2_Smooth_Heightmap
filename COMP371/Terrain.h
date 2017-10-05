@@ -12,18 +12,22 @@ using namespace std;
 class Terrain
 {
 public:
-	Terrain(std::string heightmapPath);
+	Terrain();
+	void init(std::string heightmapPath);
 	~Terrain();
 	vector<float> getVertices(int width, int height);
 	vector<int> getIndices(int width, int height);
 	void Draw(GLenum renderMode);
-	int getWidth() const;
-	int getHeight() const;
-
+	int getOriginalWidth() const;
+	int getOriginalHeight() const;
+	void setSkipSize(int skipSize);
 private:
 	int width;
 	int height;
 	vector<float> vertices ;
+	int originalWidth;
+	int originalHeight;
+	vector<float> originalVertices;
 	vector<int> indices;
 	int getVerticesCount(int width, int height);
 	int getIndicesCount(int width, int height);
@@ -31,6 +35,6 @@ private:
 	unsigned char *heightMapData;
 	/* Render Data */
 	unsigned int VAO, VBO, EBO;
-	void setupMesh();
+	void setupMesh(bool init);
 };
 
