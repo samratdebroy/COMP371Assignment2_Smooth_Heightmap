@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="Terrain.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="Terrain.h" />
+    <ClInclude Include="stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\vertex.shader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\fragment.shader">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\terrain.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\terrain.frag">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{7f9928ad-5fdc-46ec-a43a-111f098f1787}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

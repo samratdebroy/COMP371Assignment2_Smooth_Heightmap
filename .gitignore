@@ -1,0 +1,5 @@
+*.db
+*.opendb
+COMP371/Debug/COMP371.tlog/
+COMP371/Debug/COMP371_Lab3.tlog/
+COMP371/Debug/vc140.idb
