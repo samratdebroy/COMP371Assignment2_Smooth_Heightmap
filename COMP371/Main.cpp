@@ -101,7 +101,7 @@ int main()
 	triangle_scale = glm::vec3(0.01f);
 
 	// Terrain Plain
-	terrain.init("heightmaps/Heightmap.png");
+	terrain.init("heightmaps/depth.bmp");
 	Shader terrainShader("shaders/terrain.vert", "shaders/terrain.frag");
 
 		// Game loop
@@ -172,6 +172,13 @@ void processInput(GLFWwindow *window)
 		triangle_scale += 0.1 * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
 		triangle_scale -= 0.1 * deltaTime;
+
+	// CatMull
+	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS && glfwGetTime() - lastSkipSizeUpdate > 1)
+	{
+		terrain.nextState(0.1f);
+		lastSkipSizeUpdate = glfwGetTime();
+	}
 
 	// SkipSize Change
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && glfwGetTime() - lastSkipSizeUpdate > 1)

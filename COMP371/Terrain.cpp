@@ -101,6 +101,8 @@ int Terrain::getOriginalHeight() const
 
 void Terrain::setSkipSize(int skipSize)
 {
+	state = REDUCED;
+
 	if(skipSize == 1)
 	{
 		// Overwrite the global values of the Terrain
@@ -114,9 +116,7 @@ void Terrain::setSkipSize(int skipSize)
 		int newHeight = originalHeight / skipSize;
 
 		vector<float> tempVertices;
-		tempVertices.resize(getVerticesCount(newWidth, newHeight));
-
-		int i = 0;
+		tempVertices.reserve(getVerticesCount(newWidth, newHeight));
 
 		// Populate Vertex positions
 		for (int row = 0; row < newHeight; row++)
@@ -124,9 +124,9 @@ void Terrain::setSkipSize(int skipSize)
 			for (int col = 0; col <newWidth; col++)
 			{
 				int index = (row*skipSize*originalWidth + col*skipSize) * 3;
-				tempVertices[i++] = originalVertices[index + 0];	// x pos
-				tempVertices[i++] = originalVertices[index + 1];	// y pos
-				tempVertices[i++] = originalVertices[index + 2];	// z pos
+				tempVertices.push_back( originalVertices[index + 0] );	// x pos
+				tempVertices.push_back(originalVertices[index + 1] );	// y pos
+				tempVertices.push_back(originalVertices[index + 2] );	// z pos
 			}
 		}
 
@@ -144,9 +144,23 @@ void Terrain::setSkipSize(int skipSize)
 
 }
 
+void Terrain::nextState(float value)
+{
+	if(state == REDUCED)
+	{
+		getCatMullXVertices(value);
+		state = CATMULLX;
+	}
+	else if (state == CATMULLX)
+	{
+		getCatMullZVertices(value);
+		state = CATMULLZ;
+	}
+}
+
 int Terrain::getVerticesCount(int width, int height)
 {
-	return width * height * 3; //TODO maybe add normals in the future
+	return width * height * 3;
 }
 
 int Terrain::getIndicesCount(int width, int height)
@@ -155,6 +169,194 @@ int Terrain::getIndicesCount(int width, int height)
 	int numDegenIndices = 2 * (numTriStrips - 1); // Number of degenerate indices required (used to move from one strip to another)
 	int verticesPerStrip = 2 * width;
 	return (verticesPerStrip * numTriStrips + numDegenIndices);
+}
+
+void Terrain::getCatMullXVertices(float stepSize)
+{
+	// store width and height of reduced vertices
+	int numPtsPerSegment = ceil( 1.0f/ stepSize); // assuming 0.0 < stepSize < 1.0 and excluding one end point
+	int newWidth = numPtsPerSegment * (width-1) + 1; // numPtsPerSegment * numSegmentsPerRow + 1 end point
+	int newHeight = height;
+
+	vector<float> tempVertices;
+	tempVertices.reserve(getVerticesCount(newWidth, newHeight));
+
+	glm::vec3 p0, p1, p2, p3;
+
+	// Populate Vertex positions
+	for (int row = 0; row < height; row++)
+	{
+		// Get first two points of the row
+		int i = row*width * 3;
+		p0 = glm::vec3(vertices[i+ 0], vertices[i + 1], vertices[i + 2]);
+		p1 = glm::vec3(vertices[i + 3], vertices[i + 4], vertices[i + 5]);
+		// Linear interpolation between first Point and 2nd point
+		for (float u = 0.0f; u < 1.0f; u += stepSize)
+		{
+			glm::vec3 point = p0 + u *(p1 - p0);
+			// Add point as a vertex for new mesh
+			tempVertices.push_back(point.x);
+			tempVertices.push_back(point.y);
+			tempVertices.push_back(point.z);
+		}
+
+		// Do CatMull Rom on every point
+		for (int col = 1; col < width - 2; col++)
+		{
+			// Get four points
+			int index = (row*width + col) * 3;
+			p0 = glm::vec3(vertices[index - 3], vertices[index - 2], vertices[index - 1]);
+			p1 = glm::vec3(vertices[index + 0], vertices[index + 1], vertices[index + 2]);
+			p2 = glm::vec3(vertices[index + 3], vertices[index + 4], vertices[index + 5]);
+			p3 = glm::vec3(vertices[index + 6], vertices[index + 7], vertices[index + 8]);
+
+			// Evaluate and push CatMullPoints
+			float u = 0.0f; // Current step
+			glm::vec3 point;
+			for(float u = 0.0f; u < 1.0f; u += stepSize)
+			{			
+				// Calculate the next interpolated curve point
+				point = 0.5f * (
+					(2.0f * p1) +
+					(-p0 + p2)*u +
+					(2.0f * p0 - 5.0f * p1 + 4.0f *p2 - p3)*u*u +
+					(-p0 + 3.0f*p1 - 3.0f*p2 + p3)*u*u*u);
+
+				// Add point as a vertex for new mesh
+				tempVertices.push_back(point.x);
+				tempVertices.push_back(point.y);
+				tempVertices.push_back(point.z);
+			}
+		}
+
+		// Get last two points of the row
+		i = (row*width + (width - 2)) * 3;
+		p0 = glm::vec3(vertices[i + 0], vertices[i + 1], vertices[i+ 2]);
+		p1 = glm::vec3(vertices[i + 3], vertices[i + 4], vertices[i+ 5]);
+		// Linear interpolation between 2nd to last Point and last point
+		for (float u = 0.0f; u < 1.0f; u += stepSize)
+		{
+			glm::vec3 point = p0 + u *(p1 - p0);
+			// Add point as a vertex for new mesh
+			tempVertices.push_back(point.x);
+			tempVertices.push_back(point.y);
+			tempVertices.push_back(point.z);
+		}
+
+		// Add last point in row
+		// Add point as a vertex for new mesh
+		tempVertices.push_back(p1.x);
+		tempVertices.push_back(p1.y);
+		tempVertices.push_back(p1.z);
+	}
+
+	// Overwrite the global values of the Terrain
+	width = newWidth;
+	height = newHeight;
+	vertices = tempVertices;
+
+	// Reset the Mesh
+	indices.clear();
+	getIndices(width, height);
+	setupMesh(false);
+}
+
+void Terrain::getCatMullZVertices(float stepSize)
+{
+
+	// store width and height of reduced vertices
+	int numPtsPerSegment = ceil(1.0f / stepSize); // assuming 0.0 < stepSize < 1.0 and excluding one end point
+	int newHeight = numPtsPerSegment * (height - 1) + 1; // numPtsPerSegment * numSegmentsPerCol + 1 end point
+	int newWidth = width;
+
+	vector<float> tempVertices;
+	tempVertices.resize(getVerticesCount(newWidth, newHeight));
+
+	glm::vec3 p0, p1, p2, p3;
+
+	// Populate Vertex positions
+	for (int col  = 0; col < width; col++)
+	{
+		// Get first two points of the col
+		int i = col * 3;
+		p0 = glm::vec3(vertices[i + 0], vertices[i + 1], vertices[i + 2]);
+		p1 = glm::vec3(vertices[width*3 + i + 0], vertices[width*3 + i + 1], vertices[width*3 + i + 2]);
+		// Linear interpolation between first Point and 2nd point
+		int newRow = 0;
+		for (float u = 0.0f; u < 1.0f; u += stepSize)
+		{
+			glm::vec3 point = p0 + u *(p1 - p0);
+			int index = (newRow*newWidth + col )* 3;
+			// Add point as a vertex for new mesh
+			tempVertices[index + 0] = point.x;
+			tempVertices[index + 1] = point.y;
+			tempVertices[index + 2] = point.z;
+			newRow++;
+		}
+
+		// Do CatMull Rom on every point
+		for (int row = 1; row < height - 2; row++)
+		{
+			// Get four points
+			auto index = [&](int offset) {return (width*(row+ offset) + col) * 3; };
+			p0 = glm::vec3(vertices[index(-1) + 0], vertices[index(-1) + 1], vertices[index(-1) +2]);
+			p1 = glm::vec3(vertices[index(0) + 0], vertices[index(0) + 1], vertices[index(0) +2]);
+			p2 = glm::vec3(vertices[index(1) + 0], vertices[index(1) + 1], vertices[index(1) +2]);
+			p3 = glm::vec3(vertices[index(2) + 0], vertices[index(2) + 1], vertices[index(2) +2]);
+
+			// Evaluate and push CatMullPoints
+			float u = 0.0f; // Current step
+			glm::vec3 point;
+			for (float u = 0.0f; u < 1.0f; u += stepSize)
+			{
+				// Calculate the next interpolated curve point
+				point = 0.5f * (
+					(2.0f * p1) +
+					(-p0 + p2)*u +
+					(2.0f * p0 - 5.0f * p1 + 4.0f *p2 - p3)*u*u +
+					(-p0 + 3.0f*p1 - 3.0f*p2 + p3)*u*u*u);
+
+				// Add point as a vertex for new mesh
+				int i = (newRow*newWidth + col) * 3;
+				tempVertices[i + 0] = point.x;
+				tempVertices[i + 1] = point.y;
+				tempVertices[i + 2] = point.z;
+				newRow++;
+			}
+		}
+
+		// Get last two points of the col
+		i = (width*(height-2) + col) * 3;
+		p0 = glm::vec3(vertices[i + 0], vertices[i + 1], vertices[i + 2]);
+		p1 = glm::vec3(vertices[width * 3 + i + 0], vertices[width * 3 + i + 1], vertices[width * 3 + i + 2]);
+		// Linear interpolation between first Point and 2nd point
+		newRow = 0;
+		for (float u = 0.0f; u < 1.0f; u += stepSize)
+		{
+			glm::vec3 point = p0 + u *(p1 - p0);
+			int index = (newRow*newWidth + col) * 3;
+			// Add point as a vertex for new mesh
+			tempVertices[index + 0] = point.x;
+			tempVertices[index + 1] = point.y;
+			tempVertices[index + 2] = point.z;
+			newRow++;
+		}
+
+		// Add last point in column
+		tempVertices[newWidth*(newHeight - 1) + 0 + col] = p1.x;
+		tempVertices[newWidth*(newHeight - 1) + 1 + col] = p1.y;
+		tempVertices[newWidth*(newHeight - 1) + 2 + col] = p1.z;
+	}
+
+	// Overwrite the global values of the Terrain
+	width = newWidth;
+	height = newHeight;
+	vertices = tempVertices;
+
+	// Reset the Mesh
+	indices.clear();
+	getIndices(width, height);
+	setupMesh(false);
 }
 
 void Terrain::setupMesh(bool init = true)
