@@ -3,6 +3,7 @@
 
 Camera::Camera(glm::vec3 Position)
 {
+	startPosition = Position;
 	position = Position;
 	yaw = 0;
 	pitch = 0;
@@ -68,4 +69,12 @@ glm::vec3 Camera::rightDirection() const
 glm::vec3 Camera::upDirection() const
 {
 	return up;
+}
+
+void Camera::reset()
+{
+	position = startPosition;
+	yaw = 0;
+	pitch = 0;
+	updateCameraOrientation();
 }

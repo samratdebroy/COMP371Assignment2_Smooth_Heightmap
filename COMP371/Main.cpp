@@ -45,11 +45,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow *window);
 void setDrawMode(GLenum newDrawMode);
-void setSkipSize();
+void reset();
 
 // Terrain with HeightMap
 Terrain terrain;
-int skipSize = 1;
+float stepSize;
 
 // The MAIN function, from here we start the application and run the game loop
 int main()
@@ -103,6 +103,9 @@ int main()
 	// Terrain Plain
 	terrain.init("heightmaps/depth.bmp");
 	Shader terrainShader("shaders/terrain.vert", "shaders/terrain.frag");
+
+	// Ask user for skipSize and stepSize for CatMull operations
+	reset();
 
 		// Game loop
 		while (!glfwWindowShouldClose(window))
@@ -176,29 +179,8 @@ void processInput(GLFWwindow *window)
 	// CatMull
 	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS && glfwGetTime() - lastSkipSizeUpdate > 1)
 	{
-		terrain.nextState(0.1f);
+		terrain.nextState(stepSize);
 		lastSkipSizeUpdate = glfwGetTime();
-	}
-
-	// SkipSize Change
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && glfwGetTime() - lastSkipSizeUpdate > 1)
-	{
-		if (skipSize + 5 < terrain.getOriginalWidth()/2 && skipSize + 5 < terrain.getOriginalHeight()/2)
-		{
-			skipSize += 5;
-			setSkipSize();
-			lastSkipSizeUpdate = glfwGetTime();
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && glfwGetTime() - lastSkipSizeUpdate > 1)
-	{
-		if (skipSize - 5 >= 1 && skipSize - 5 >= 1)
-		{
-			skipSize -= 5;
-			setSkipSize();
-			lastSkipSizeUpdate = glfwGetTime();
-		}
-
 	}
 
 	// Change Render Mode
@@ -207,7 +189,8 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
 		setDrawMode(GL_POINTS);
 
-	// TODO: BACKSPACE -> RESET CAM, RESET MESH, ASK SKIPSIZE
+	if (glfwGetKey(window, GLFW_KEY_BACKSPACE) == GLFW_PRESS)
+		reset();
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -257,7 +240,24 @@ void setDrawMode(GLenum newDrawMode)
 	drawMode = newDrawMode;
 }
 
-void setSkipSize()
+void reset()
 {
+	int skipSize = 0;
+	stepSize = 0;
+
+	while(skipSize < 1 || skipSize > 300)
+	{
+		cout << "Enter reduce skip size between 1 to 300: ";
+		cin >> skipSize;
+	}
+
+	while (stepSize < 0.01f || stepSize > 1.0f)
+	{
+		cout << "Enter CatMull step size between 0.01 to 1.0: ";
+		cin >> stepSize;
+	}
+
 	terrain.setSkipSize(skipSize);
+
+	camera.reset();
 }

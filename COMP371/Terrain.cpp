@@ -330,7 +330,6 @@ void Terrain::getCatMullZVertices(float stepSize)
 		p0 = glm::vec3(vertices[i + 0], vertices[i + 1], vertices[i + 2]);
 		p1 = glm::vec3(vertices[width * 3 + i + 0], vertices[width * 3 + i + 1], vertices[width * 3 + i + 2]);
 		// Linear interpolation between first Point and 2nd point
-		newRow = 0;
 		for (float u = 0.0f; u < 1.0f; u += stepSize)
 		{
 			glm::vec3 point = p0 + u *(p1 - p0);
@@ -343,9 +342,9 @@ void Terrain::getCatMullZVertices(float stepSize)
 		}
 
 		// Add last point in column
-		tempVertices[newWidth*(newHeight - 1) + 0 + col] = p1.x;
-		tempVertices[newWidth*(newHeight - 1) + 1 + col] = p1.y;
-		tempVertices[newWidth*(newHeight - 1) + 2 + col] = p1.z;
+		tempVertices[(newWidth*newRow + col)*3+ 0] = p1.x;
+		tempVertices[(newWidth*newRow + col) * 3 + 1] = p1.y;
+		tempVertices[(newWidth*newRow + col) * 3 + 2] = p1.z;
 	}
 
 	// Overwrite the global values of the Terrain

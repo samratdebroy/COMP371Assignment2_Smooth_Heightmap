@@ -9,6 +9,7 @@ private:
 	float yaw, pitch;
 	// Camera Position and Orientation
 	glm::vec3 position;
+	glm::vec3 startPosition;
 	glm::vec3 forward;
 	glm::vec3 right;
 	glm::vec3 up;
@@ -26,5 +27,7 @@ public:
 	glm::vec3 forwardDirection() const;
 	glm::vec3 rightDirection() const;
 	glm::vec3 upDirection() const;
+
+	void reset();
 };
 
