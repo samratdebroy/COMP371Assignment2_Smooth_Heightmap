@@ -260,7 +260,7 @@ void Terrain::getCatMullXVertices(float stepSize)
 	setupMesh(false);
 }
 
-void Terrain::getCatMullZVertices(float stepSize)
+void Terrain::getCatMullZVertices(double stepSize)
 {
 
 	// store width and height of reduced vertices

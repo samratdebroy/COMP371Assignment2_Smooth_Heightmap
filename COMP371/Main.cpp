@@ -268,9 +268,9 @@ void reset()
 		cin >> skipSize;
 	}
 
-	while (stepSize < 0.01f || stepSize > 1.0f)
+	while (stepSize < 0.05f || stepSize > 1.0f)
 	{
-		cout << "Enter CatMull step size between 0.01 to 1.0: ";
+		cout << "Enter CatMull step size between 0.05 to 1.0: ";
 		cin >> stepSize;
 	}
 

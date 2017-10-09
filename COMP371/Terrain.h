@@ -46,7 +46,7 @@ private:
 	unsigned char *heightMapData;
 
 	void getCatMullXVertices(float stepSize);
-	void getCatMullZVertices(float stepSize);
+	void getCatMullZVertices(double stepSize);
 
 	/* Render Data */
 	unsigned int VAO, VBO, EBO;
