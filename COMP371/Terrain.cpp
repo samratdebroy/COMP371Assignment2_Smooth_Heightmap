@@ -211,7 +211,6 @@ void Terrain::getCatMullXVertices(float stepSize)
 			p3 = glm::vec3(vertices[index + 6], vertices[index + 7], vertices[index + 8]);
 
 			// Evaluate and push CatMullPoints
-			float u = 0.0f; // Current step
 			glm::vec3 point;
 			for(float u = 0.0f; u < 1.0f; u += stepSize)
 			{			

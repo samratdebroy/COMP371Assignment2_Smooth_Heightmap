@@ -49,6 +49,8 @@ void reset();
 
 // Terrain with HeightMap
 Terrain terrain;
+Terrain origTerrain;
+bool showOriginalTerrain = false;
 float stepSize;
 
 // The MAIN function, from here we start the application and run the game loop
@@ -102,6 +104,7 @@ int main()
 
 	// Terrain Plain
 	terrain.init("heightmaps/depth.bmp");
+	origTerrain.init("heightmaps/depth.bmp");
 	Shader terrainShader("shaders/terrain.vert", "shaders/terrain.frag");
 
 	// Ask user for skipSize and stepSize for CatMull operations
@@ -135,7 +138,13 @@ int main()
 			terrainShader.setMat4("projection", projection);
 			terrainShader.setMat4("view", view);
 			terrainShader.setMat4("model", model);
-			terrain.Draw(drawMode);
+			if(showOriginalTerrain)
+			{
+				origTerrain.Draw(drawMode);
+			}else
+			{
+				terrain.Draw(drawMode);
+			}
 
 			// Swap the screen buffers
 			glfwSwapBuffers(window);
@@ -180,6 +189,14 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS && glfwGetTime() - lastSkipSizeUpdate > 1)
 	{
 		terrain.nextState(stepSize);
+		lastSkipSizeUpdate = glfwGetTime();
+	}
+
+
+	// Show original terrain buffer
+	if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS && glfwGetTime() - lastSkipSizeUpdate > 1)
+	{
+		showOriginalTerrain = !showOriginalTerrain;
 		lastSkipSizeUpdate = glfwGetTime();
 	}
 
